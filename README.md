@@ -49,6 +49,27 @@ Everything after the form submit runs in the background. Apify and AI-Ark call b
 - API keys for Apify, OpenAI, Perplexity and AI-Ark
 - [ngrok](https://ngrok.com) for local development — webhooks need a public URL
 
+### API keys
+
+| Service                                                  | Used for                                   | Where to get it                         |
+| -------------------------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| [Apify](https://console.apify.com/settings/integrations) | Running the job scrapers                   | Console → Settings → API & Integrations |
+| [OpenAI](https://platform.openai.com/api-keys)           | Classifying companies with descriptions    | Platform → API keys                     |
+| [Perplexity](https://www.perplexity.ai/settings/api)     | Classifying companies without descriptions | Settings → API                          |
+| [AI-Ark](https://docs.ai-ark.com)                        | Contact data, emails, phone numbers        | Account dashboard                       |
+
+All four are paid. Apify and AI-Ark have free credits to start with; the others bill per use.
+
+Verify a key works before running the whole pipeline:
+
+```bash
+# AI-Ark — returns your remaining credit balance
+curl https://api.ai-ark.com/api/developer-portal/v1/payments/credits -H "X-TOKEN: your_key"
+
+# OpenAI — returns the model list
+curl https://api.openai.com/v1/models -H "Authorization: Bearer your_key"
+```
+
 ### Backend
 
 ```bash
