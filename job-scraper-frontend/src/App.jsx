@@ -1,122 +1,80 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect, useRef } from "react";
+import SearchForm from "./components/SearchForm.jsx";
+import RunProgress from "./components/RunProgress.jsx";
+import { startScrape, fetchJobStatus } from "./helpers/apiHelpers.js";
+import { isRunning } from "./helpers/formatHelpers.js";
+import { POLL_INTERVAL_MS } from "./constants/statusConstants.js";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [jobId, setJobId] = useState(() =>
+    new URLSearchParams(window.location.search).get("job"),
+  );
+  const [status, setStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const startedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const next = await fetchJobStatus(jobId);
+        if (cancelled) return;
+        setStatus(next);
+        if (isRunning(next.status)) setTimeout(poll, POLL_INTERVAL_MS);
+      } catch (error) {
+        if (!cancelled) setSubmitError(error.message);
+      }
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
+
+  const handleSubmit = async (values) => {
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const result = await startScrape(values);
+      startedAt.current = Date.now();
+      setJobId(result.jobId);
+      window.history.replaceState(null, "", `?job=${result.jobId}`);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setJobId(null);
+    setStatus(null);
+    setSubmitError("");
+    window.history.replaceState(null, "", window.location.pathname);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <main className="shell">
+      {jobId ? (
+        <RunProgress
+          jobId={jobId}
+          status={status}
+          startedAt={startedAt.current}
+          onReset={handleReset}
+        />
+      ) : (
+        <SearchForm
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          submitError={submitError}
+        />
+      )}
+    </main>
+  );
 }
-
-export default App

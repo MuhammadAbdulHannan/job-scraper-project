@@ -17,6 +17,8 @@ const jobSchema = new mongoose.Schema(
             personaTitles: [String],
             platforms: [String],
             jobsPerKeyword: Number,
+            needEmail: { type: Boolean, default: true },
+            needPhone: { type: Boolean, default: false },
         },
         apifyRuns: [
             {
@@ -28,7 +30,16 @@ const jobSchema = new mongoose.Schema(
         ],
         scrapedJobs: { type: Array, default: [] },
         resultFilePath: { type: String, default: null },
+        filteredJobs: { type: Array, default: [] },
+        removedJobs: { type: Array, default: [] },
+        cleanedCompanies: { type: Array, default: [] },
+        contacts: { type: Array, default: [] },
+        aiArkExport: {
+            trackId: { type: String, default: null },
+            state: { type: String, default: null },
+        },
         error: { type: String, default: null },
+        emptyReason: { type: String, default: null },
     },
     { timestamps: true }
 );

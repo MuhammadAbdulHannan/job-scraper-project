@@ -21,4 +21,8 @@ export const REMOVAL_REASON = {
     STAFFING_WORD: 'staffing_word_match',
 };
 
-export const STRIPPED_JOB_FIELDS = ['descriptionHtml', 'trackingId', 'refId', 'companyLogo'];
+export const STRIPPED_JOB_FIELDS = [
+    'descriptionHtml', 'trackingId', 'refId', 'companyLogo',
+    'attributes', 'attributesWithKeys', 'companyHeaderImage', 'companyCeoPhoto', 'occupations', 'occupationsWithKeys', 'attributesWithKeys', 'attributes',
+    'companyHeaderImage', 'companyCeoPhoto', 'companyLogo',
+];

@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import Job from '../models/job.model.js';
 import { triggerActorRun } from '../services/apify.service.js';
-import { JOB_STATUS, DEFAULT_STAFFING_WORDS } from '../constants/apifyConstants.js';
+import { JOB_STATUS, JOB_STATUS_LABELS, DEFAULT_STAFFING_WORDS } from '../constants/apifyConstants.js';
 
 export const startScrape = async (req, res) => {
     console.log(req.body);
@@ -14,6 +14,8 @@ export const startScrape = async (req, res) => {
             personaTitles,
             platforms,
             jobsPerKeyword,
+            needEmail = true,
+            needPhone = false
         } = req.body;
 
         if (!keywords?.length || !platforms?.length) {
@@ -35,6 +37,8 @@ export const startScrape = async (req, res) => {
                 personaTitles,
                 platforms,
                 jobsPerKeyword,
+                needEmail,
+                needPhone,
             },
         });
 
@@ -79,24 +83,27 @@ export const startScrape = async (req, res) => {
 export const getJobStatus = async (req, res) => {
     try {
         const job = await Job.findOne({ jobId: req.params.jobId });
-        if (!job) return res.status(404).json({
-            success: false,
-            error: 'Job not found'
-        });
+        if (!job) return res.status(404).json({ error: 'Job not found' });
 
         res.json({
-            success: true,
             jobId: job.jobId,
             status: job.status,
+            statusLabel: JOB_STATUS_LABELS[job.status] || job.status,
+            isReady: job.status === JOB_STATUS.READY,
+            isFailed: job.status === JOB_STATUS.FAILED,
             totalRuns: job.apifyRuns.length,
             completedRuns: job.apifyRuns.filter((r) => r.status !== 'RUNNING').length,
-            resultFilePath: job.resultFilePath,
+            scrapedCount: job.scrapedJobs.length,
+            companiesCount: job.cleanedCompanies?.length || 0,
+            contactsCount: job.contacts?.length || 0,
+            emailsFound: job.contacts?.filter((c) => c.email).length || 0,
+            phonesFound: job.contacts?.filter((c) => c.mobilePhone).length || 0,
+            isEmpty: job.status === JOB_STATUS.EMPTY,
+            emptyReason: job.emptyReason,
+            error: job.error,
         });
-    }
-    catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
+

@@ -20,9 +20,23 @@ export const PLATFORMS = {
 export const JOB_STATUS = {
     PENDING: 'pending',
     SCRAPING: 'scraping',
-    PROCESSING: 'processing',
-    DONE: 'done',
+    FILTERING: 'filtering',
+    CLASSIFYING: 'classifying',
+    FINDING_CONTACTS: 'finding_contacts',
+    READY: 'ready',
+    EMPTY: 'empty',
     FAILED: 'failed',
+};
+
+export const JOB_STATUS_LABELS = {
+    pending: 'Queued',
+    scraping: 'Scraping job listings',
+    filtering: 'Filtering companies',
+    classifying: 'Removing staffing agencies',
+    finding_contacts: 'Finding contacts',
+    ready: 'Ready to download',
+    empty: 'No contacts found',
+    failed: 'Failed',
 };
 
 export const DEFAULT_STAFFING_WORDS = [
@@ -32,3 +46,13 @@ export const DEFAULT_STAFFING_WORDS = [
     'manpower', 'workforce', 'resourcing', 'temp', 'temps', 'temping',
     'hr', 'human resources', 'humanresources',
 ];
+
+export const APIFY_RUN_STATUS = {
+    RUNNING: 'RUNNING',
+    SUCCEEDED: 'SUCCEEDED',
+    FAILED: 'FAILED',
+    ABORTED: 'ABORTED',
+    TIMED_OUT: 'TIMED-OUT',
+};
+
+export const APIFY_TERMINAL_STATUSES = ['SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED-OUT'];

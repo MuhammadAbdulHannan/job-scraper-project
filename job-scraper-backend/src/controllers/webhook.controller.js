@@ -1,49 +1,185 @@
 import Job from '../models/job.model.js';
 import { fetchRunResults } from '../services/apify.service.js';
-import { JOB_STATUS } from '../constants/apifyConstants.js';
+import { JOB_STATUS, APIFY_TERMINAL_STATUSES } from '../constants/apifyConstants.js';
+import { applyRuleFilters } from '../services/filter.service.js';
+import { classifyCompanies } from '../services/classification.service.js';
+import { groupByCompany, normalizeJob, stripJobFields } from '../helpers/jobHelpers.js';
+import {
+    resolveCompanies,
+    lookupContactsWithoutEmail,
+    startContactExport,
+    enrichWithPhones,
+} from '../services/contactLookup.service.js';
 
 export const handleApifyWebhook = async (req, res) => {
-    // Respond immediately so Apify doesn't retry while we process
     res.status(200).send('OK');
 
     try {
         const { eventType, resource } = req.body;
         const runId = resource?.id;
-
         if (!runId) return;
 
-        // Find which job this run belongs to
         const job = await Job.findOne({ 'apifyRuns.runId': runId });
         if (!job) {
             console.warn(`No job found for runId ${runId}`);
             return;
         }
 
-        const run = job.apifyRuns.find((r) => r.runId === runId);
-
+        // ---- FIX 3: atomic update, no version conflict ----
         if (eventType === 'ACTOR.RUN.SUCCEEDED') {
+            const run = job.apifyRuns.find((r) => r.runId === runId);
             const results = await fetchRunResults(runId);
-            job.scrapedJobs.push(...results);
-            run.status = 'SUCCEEDED';
             console.log(`Run ${runId} finished with ${results.length} jobs`);
+
+            if (run.platform === 'indeed' && results.length) {
+                console.log('RAW INDEED KEYS:', Object.keys(results[0]));
+            }
+
+            await Job.updateOne(
+                { jobId: job.jobId, 'apifyRuns.runId': runId },
+                {
+                    $set: { 'apifyRuns.$.status': 'SUCCEEDED' },
+                    $push: {
+                        scrapedJobs: {
+                            $each: results.map((item) => stripJobFields(normalizeJob(item, run.platform))),
+                        },
+                    },
+                }
+            );
         } else if (eventType === 'ACTOR.RUN.FAILED') {
-            run.status = 'FAILED';
             console.warn(`Run ${runId} failed`);
+            await Job.updateOne(
+                { jobId: job.jobId, 'apifyRuns.runId': runId },
+                { $set: { 'apifyRuns.$.status': 'FAILED' } }
+            );
         }
 
-        // Check if ALL runs for this job are now finished
-        const allDone = job.apifyRuns.every((r) => r.status !== 'RUNNING');
+        // re-read to see the latest state after that write
+        const refreshed = await Job.findOne({ jobId: job.jobId });
 
-        if (allDone) {
-            job.status = JOB_STATUS.PROCESSING;
-            console.log(`All runs done for job ${job.jobId}. Total jobs scraped: ${job.scrapedJobs.length}`);
-            // next phases (filtering, AI classification, AI-Ark) will hook in here
+        const allDone = refreshed.apifyRuns.every((run) =>
+            APIFY_TERMINAL_STATUSES.includes(String(run.status).toUpperCase())
+        );
+
+        if (!allDone) return;
+
+        // ---- FIX 2: only one webhook may claim the pipeline ----
+        const claimed = await Job.findOneAndUpdate(
+            { jobId: refreshed.jobId, status: JOB_STATUS.SCRAPING },
+            { $set: { status: JOB_STATUS.FILTERING } },
+            { returnDocument: 'after' }
+        );
+
+        if (!claimed) {
+            console.log(`Job ${refreshed.jobId}: pipeline already running elsewhere, skipping`);
+            return;
         }
 
-        job.markModified('apifyRuns');
-        job.markModified('scrapedJobs');
-        await job.save();
+        await runPipeline(claimed);
     } catch (error) {
         console.error('Webhook processing error:', error.message);
+    }
+};
+
+// everything after scraping, extracted into its own function
+const runPipeline = async (job) => {
+    try {
+        // ---- FILTERING ----
+        const { kept, removed } = applyRuleFilters(job.scrapedJobs, {
+            employeeCountMin: job.inputs.employeeCountMin,
+            employeeCountMax: job.inputs.employeeCountMax,
+        });
+
+        job.filteredJobs = kept;
+        job.removedJobs = removed;
+        job.markModified('filteredJobs');
+        job.markModified('removedJobs');
+        await job.save();
+
+        console.log(`Job ${job.jobId}: ${job.scrapedJobs.length} scraped, ${kept.length} kept after rules`);
+
+        if (!kept.length) {
+            job.status = JOB_STATUS.EMPTY;
+            job.emptyReason = 'No companies matched your filters. Try widening the employee-count range.';
+            await job.save();
+            return;
+        }
+
+        // ---- CLASSIFYING ----
+        job.status = JOB_STATUS.CLASSIFYING;
+        await job.save();
+
+        const companies = groupByCompany(kept);
+        console.log(`Classifying ${companies.length} unique companies...`);
+
+        const { kept: cleanCompanies, removed: aiRemoved } = await classifyCompanies(companies);
+
+        job.cleanedCompanies = cleanCompanies;
+        job.removedJobs.push(...aiRemoved);
+        job.markModified('cleanedCompanies');
+        job.markModified('removedJobs');
+        await job.save();
+
+        console.log(`After AI: ${cleanCompanies.length} companies kept, ${aiRemoved.length} flagged as agencies`);
+
+        // ---- FINDING CONTACTS ----
+        job.status = JOB_STATUS.FINDING_CONTACTS;
+        await job.save();
+
+        const { companyIds } = await resolveCompanies(cleanCompanies);
+        console.log(`Resolved ${companyIds.length} of ${cleanCompanies.length} companies in AI-Ark`);
+
+        if (!companyIds.length) {
+            job.status = JOB_STATUS.EMPTY;                                    // ← was READY
+            job.emptyReason = 'Companies were found, but none matched in the contact database.';  // ← add
+            await job.save();
+            return;
+        }
+
+        if (job.inputs.needEmail) {
+            const exportJob = await startContactExport({
+                companyIds,
+                personaTitles: job.inputs.personaTitles,
+                webhookUrl: `${process.env.PUBLIC_BASE_URL}/api/aiark-webhook`,
+            });
+
+            job.aiArkExport = { trackId: exportJob.trackId, state: exportJob.state };
+            job.markModified('aiArkExport');
+            await job.save();
+
+            console.log(`AI-Ark export started: ${exportJob.trackId}`);
+            // pipeline resumes in the AI-Ark webhook
+        } else {
+            let contacts = await lookupContactsWithoutEmail({
+                companyIds,
+                personaTitles: job.inputs.personaTitles,
+            });
+
+            if (!contacts.length) {
+                job.status = JOB_STATUS.EMPTY;
+                job.emptyReason = 'Companies were found, but nobody at them matched your persona titles. Try broadening the titles.';
+                job.aiArkExport.state = 'DONE';
+                job.markModified('aiArkExport');
+                await job.save();
+                return;
+            }
+
+            if (job.inputs.needPhone) {
+                contacts = await enrichWithPhones(contacts);
+            }
+
+
+            job.contacts = contacts;
+            job.status = JOB_STATUS.READY;
+            job.markModified('contacts');
+            await job.save();
+
+            console.log(`Found ${contacts.length} contacts`);
+        }
+    } catch (error) {
+        console.error(`Pipeline failed for job ${job.jobId}:`, error.message);
+        job.status = JOB_STATUS.FAILED;
+        job.error = error.message;
+        await job.save();
     }
 };
