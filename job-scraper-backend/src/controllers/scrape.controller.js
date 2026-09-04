@@ -4,7 +4,6 @@ import { triggerActorRun } from '../services/apify.service.js';
 import { JOB_STATUS, JOB_STATUS_LABELS, DEFAULT_STAFFING_WORDS } from '../constants/apifyConstants.js';
 
 export const startScrape = async (req, res) => {
-    console.log(req.body);
     try {
         const {
             keywords,

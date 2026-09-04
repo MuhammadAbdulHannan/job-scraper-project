@@ -44,9 +44,6 @@ const buildActorInput = (platform, { keyword, location, jobsPerKeyword, staffing
 
 // Triggers one actor run, returns the Apify runId
 export const triggerActorRun = async (platform, inputParams, webhookUrl) => {
-    console.log('Platform received:', platform);
-    console.log("here");
-    console.log(inputParams);
     const actorId = ACTOR_IDS[platform.toUpperCase()];
     const input = buildActorInput(platform, inputParams);
 

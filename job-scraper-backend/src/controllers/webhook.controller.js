@@ -31,9 +31,9 @@ export const handleApifyWebhook = async (req, res) => {
             const results = await fetchRunResults(runId);
             console.log(`Run ${runId} finished with ${results.length} jobs`);
 
-            if (run.platform === 'indeed' && results.length) {
-                console.log('RAW INDEED KEYS:', Object.keys(results[0]));
-            }
+            // if (run.platform === 'indeed' && results.length) {
+            //     console.log('RAW INDEED KEYS:', Object.keys(results[0]));
+            // }
 
             await Job.updateOne(
                 { jobId: job.jobId, 'apifyRuns.runId': runId },

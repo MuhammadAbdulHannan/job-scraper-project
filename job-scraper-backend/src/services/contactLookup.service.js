@@ -45,10 +45,6 @@ export const collectExportResults = async (trackId) => {
         const items = data.content || [];
         contacts.push(...items.map(mapPersonToContact));
 
-        if (page === 0 && items.length) {
-            console.log('RAW INQUIRY SAMPLE:', JSON.stringify(items[0], null, 2));
-        }
-
         hasMore = items.length === 100;
         page += 1;
     }
