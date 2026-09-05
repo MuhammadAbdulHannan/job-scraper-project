@@ -8,33 +8,31 @@ import {
 import { getStageState, formatElapsed } from "../helpers/formatHelpers.js";
 import { buildDownloadUrl } from "../helpers/apiHelpers.js";
 
-export default function RunProgress({ jobId, status, startedAt, onReset }) {
+export default function RunProgress({ jobId, status, onReset }) {
   const [elapsed, setElapsed] = useState("0s");
 
-  useEffect(() => {
-    if (
-      status?.status === JOB_STATUS.READY ||
-      status?.status === JOB_STATUS.FAILED
-    )
-      return;
+  const isReady = status?.status === JOB_STATUS.READY;
+  const isFailed = status?.status === JOB_STATUS.FAILED;
+  const isEmpty = status?.status === JOB_STATUS.EMPTY;
+  const isFinished = isReady || isFailed || isEmpty;
 
-    // finished: freeze at the real duration
+  useEffect(() => {
+    if (!status?.createdAt) return;
+
     if (isFinished) {
       setElapsed(formatElapsed(status.createdAt, status.updatedAt));
       return;
     }
 
     setElapsed(formatElapsed(status.createdAt));
-    const timer = setInterval(() => setElapsed(formatElapsed(startedAt)), 1000);
+    const timer = setInterval(
+      () => setElapsed(formatElapsed(status.createdAt)),
+      1000,
+    );
     return () => clearInterval(timer);
-  }, [status?.status, startedAt]);
+  }, [status?.createdAt, status?.updatedAt, isFinished]);
 
   if (!status) return null;
-
-  const isReady = status.status === JOB_STATUS.READY;
-  const isEmpty = status.status === JOB_STATUS.EMPTY;
-  const isFailed = status.status === JOB_STATUS.FAILED;
-  const isFinished = isReady || isFailed || isEmpty;
 
   return (
     <div className="panel">
