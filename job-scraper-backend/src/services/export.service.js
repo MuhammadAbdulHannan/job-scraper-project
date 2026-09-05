@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { EXPORT_COLUMNS, HEADER_FILL, EXPORT_FONT } from '../constants/exportConstants.js';
+import { POSTED_WITHIN_LABELS } from '../constants/apifyConstants.js';
 
 export const generateXlsxBuffer = async (rows, meta = {}) => {
     const workbook = new ExcelJS.Workbook();
@@ -52,6 +53,7 @@ export const generateXlsxBuffer = async (rows, meta = {}) => {
     addSummary('Location', meta.location || '');
     addSummary('Platforms', (meta.platforms || []).join(', '));
     addSummary('Jobs per keyword', meta.jobsPerKeyword ?? '');
+    addSummary('Posted within', POSTED_WITHIN_LABELS[meta.postedWithin] || 'Any time');
     addSummary('Employee count range', `${meta.employeeCountMin ?? ''} – ${meta.employeeCountMax ?? ''}`);
     addSummary('Persona titles', (meta.personaTitles || []).join(', '));
     addSummary('', '');

@@ -1,23 +1,21 @@
 import axios from 'axios';
-import { APIFY_BASE_URL, ACTOR_IDS, PLATFORMS, AI_AGENCY_FILTER } from '../constants/apifyConstants.js';
+import { APIFY_BASE_URL, ACTOR_IDS, PLATFORMS, AI_AGENCY_FILTER, POSTED_WITHIN, POSTED_WITHIN_MAP } from '../constants/apifyConstants.js';
 
 const apifyHeaders = () => ({
     Authorization: `Bearer ${process.env.APIFY_TOKEN}`,
 });
 
 // Builds the input object each actor expects
-const buildActorInput = (platform, { keyword, location, jobsPerKeyword, staffingWords }) => {
+const buildActorInput = (platform, { keyword, location, jobsPerKeyword, postedWithin }) => {
+    const dateWindow = POSTED_WITHIN_MAP[postedWithin] || POSTED_WITHIN_MAP[POSTED_WITHIN.ANY];
     if (platform === PLATFORMS.LINKEDIN) {
         return {
             keyword,
             location,
             maxItems: jobsPerKeyword,
+            postedWithin: dateWindow.linkedin,
+            fetchDetails: true,
             fetchCompanyDetails: true,
-            removeStaffingCompanies: false,
-            staffingWords,
-            staffingMatchIn: ['company', 'companyDomain', 'companyIndustry'],
-            aiAgencyFilter: AI_AGENCY_FILTER.OFF,
-            openaiApiKey: process.env.OPENAI_API_KEY,
             proxyConfig: {
                 useApifyProxy: true,
                 apifyProxyGroups: ['RESIDENTIAL'],
@@ -31,7 +29,7 @@ const buildActorInput = (platform, { keyword, location, jobsPerKeyword, staffing
             location,
             country: 'us',
             maxItems: jobsPerKeyword,
-            postedWithinDays: '0',
+            postedWithinDays: dateWindow.indeed,
             proxyConfig: {
                 useApifyProxy: true,
                 apifyProxyGroups: ['RESIDENTIAL'],

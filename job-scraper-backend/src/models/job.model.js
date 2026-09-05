@@ -19,6 +19,9 @@ const jobSchema = new mongoose.Schema(
             jobsPerKeyword: Number,
             needEmail: { type: Boolean, default: true },
             needPhone: { type: Boolean, default: false },
+            postedWithin: { type: String, default: 'any' },
+            filterKeywords: [String],
+            filterMatchIn: [String],
         },
         apifyRuns: [
             {

@@ -56,3 +56,25 @@ export const APIFY_RUN_STATUS = {
 };
 
 export const APIFY_TERMINAL_STATUSES = ['SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED-OUT'];
+
+export const POSTED_WITHIN = {
+    ANY: 'any',
+    DAY: 'day',
+    WEEK: 'week',
+    MONTH: 'month',
+};
+
+// LinkedIn wants r-prefixed seconds, Indeed wants a day count as a string
+export const POSTED_WITHIN_MAP = {
+    [POSTED_WITHIN.ANY]: { linkedin: '', indeed: '0' },
+    [POSTED_WITHIN.DAY]: { linkedin: 'r86400', indeed: '1' },
+    [POSTED_WITHIN.WEEK]: { linkedin: 'r604800', indeed: '7' },
+    [POSTED_WITHIN.MONTH]: { linkedin: 'r2592000', indeed: '30' },
+};
+
+export const POSTED_WITHIN_LABELS = {
+    any: 'Any time',
+    day: 'Past 24 hours',
+    week: 'Past week',
+    month: 'Past month',
+};

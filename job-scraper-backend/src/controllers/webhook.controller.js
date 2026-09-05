@@ -88,6 +88,8 @@ const runPipeline = async (job) => {
         const { kept, removed } = applyRuleFilters(job.scrapedJobs, {
             employeeCountMin: job.inputs.employeeCountMin,
             employeeCountMax: job.inputs.employeeCountMax,
+            filterKeywords: job.inputs.filterKeywords,
+            filterMatchIn: job.inputs.filterMatchIn,
         });
 
         job.filteredJobs = kept;

@@ -6,6 +6,8 @@ import {
   JOBS_PER_KEYWORD_OPTIONS,
   SUGGESTED_PERSONA_TITLES,
   FIELD_HINTS,
+  POSTED_WITHIN_OPTIONS,
+  MATCH_IN_OPTIONS,
 } from "../constants/searchConstants.js";
 import { validateForm } from "../helpers/formatHelpers.js";
 
@@ -22,6 +24,15 @@ export default function SearchForm({ onSubmit, isSubmitting, submitError }) {
       platforms: prev.platforms.includes(platform)
         ? prev.platforms.filter((item) => item !== platform)
         : [...prev.platforms, platform],
+    }));
+  };
+
+  const toggleMatchIn = (field) => {
+    setValues((prev) => ({
+      ...prev,
+      filterMatchIn: prev.filterMatchIn.includes(field)
+        ? prev.filterMatchIn.filter((item) => item !== field)
+        : [...prev.filterMatchIn, field],
     }));
   };
 
@@ -103,6 +114,24 @@ export default function SearchForm({ onSubmit, isSubmitting, submitError }) {
         </div>
 
         <div className="field">
+          <label className="field-label" htmlFor="postedWithin">
+            Posted within
+          </label>
+          <select
+            id="postedWithin"
+            className="text-input"
+            value={values.postedWithin}
+            onChange={(event) => setField("postedWithin", event.target.value)}
+          >
+            {POSTED_WITHIN_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
           <span className="field-label">Company size</span>
           <div className="range-row">
             <input
@@ -163,6 +192,35 @@ export default function SearchForm({ onSubmit, isSubmitting, submitError }) {
           <em>{FIELD_HINTS.needPhone}</em>
         </label>
       </div>
+
+      <TagInput
+        label="Must mention (optional)"
+        hint={FIELD_HINTS.filterKeywords}
+        values={values.filterKeywords}
+        onChange={(next) => setField("filterKeywords", next)}
+        placeholder="react, node, typescript…"
+      />
+
+      {values.filterKeywords.length > 0 && (
+        <div className="field">
+          <span className="field-label">Look for these in</span>
+          <div className="choice-row">
+            {MATCH_IN_OPTIONS.map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                className={`choice ${values.filterMatchIn.includes(option.value) ? "is-on" : ""}`}
+                onClick={() => toggleMatchIn(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {errors.filterMatchIn && (
+            <p className="field-error">{errors.filterMatchIn}</p>
+          )}
+        </div>
+      )}
 
       {submitError && <p className="banner-error">{submitError}</p>}
 

@@ -38,6 +38,7 @@ export const EXPORT_COLUMNS = [
     { key: 'jobApplicants', header: 'Applicants', width: 14 },
     { key: 'jobLink', header: 'Job URL', width: 42 },
     { key: 'otherOpenRoles', header: 'Other Open Roles', width: 16 },
+    { key: 'jobDescription', header: 'Job Description', width: 80 },
 ];
 
 export const HEADER_FILL = '1F3864';

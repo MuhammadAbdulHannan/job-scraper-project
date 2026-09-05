@@ -55,3 +55,10 @@ export const EXPORT_FORMATS = [
     { value: 'xlsx', label: 'Excel (.xlsx)' },
     { value: 'csv', label: 'CSV' },
 ];
+
+export const POSTED_WITHIN_LABELS = {
+    any: 'Any time',
+    day: 'Past 24 hours',
+    week: 'Past week',
+    month: 'Past month',
+};

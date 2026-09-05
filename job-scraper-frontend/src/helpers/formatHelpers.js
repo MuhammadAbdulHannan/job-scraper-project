@@ -44,5 +44,10 @@ export const validateForm = (values) => {
         errors.employeeCount = 'Minimum is larger than maximum';
     }
 
+    if (values.filterKeywords.length && !values.filterMatchIn.length) {
+        errors.filterMatchIn = 'Pick at least one place to look';
+    }
+
     return errors;
 };
+

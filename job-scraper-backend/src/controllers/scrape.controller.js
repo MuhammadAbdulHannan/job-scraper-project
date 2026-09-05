@@ -13,6 +13,9 @@ export const startScrape = async (req, res) => {
             personaTitles,
             platforms,
             jobsPerKeyword,
+            postedWithin = 'any',
+            filterKeywords = [],
+            filterMatchIn = ['title'],
             needEmail = true,
             needPhone = false
         } = req.body;
@@ -36,6 +39,9 @@ export const startScrape = async (req, res) => {
                 personaTitles,
                 platforms,
                 jobsPerKeyword,
+                postedWithin,
+                filterKeywords,
+                filterMatchIn,
                 needEmail,
                 needPhone,
             },
@@ -53,7 +59,7 @@ export const startScrape = async (req, res) => {
                         keyword,
                         location,
                         jobsPerKeyword,
-                        staffingWords: DEFAULT_STAFFING_WORDS,
+                        postedWithin,
                     },
                     webhookUrl
                 );

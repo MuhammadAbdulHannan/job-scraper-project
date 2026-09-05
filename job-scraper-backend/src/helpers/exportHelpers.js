@@ -58,6 +58,7 @@ export const buildExportRows = (contacts = [], filteredJobs = []) => {
             companyType: job.companyType,
             companyDescription: job.companyDescription,
             jobTitle: job.title,
+            jobDescription: job.descriptionText,
             jobLocation: job.location,
             jobPostedAt: job.postedAt,
             jobEmploymentType: job.employmentType,

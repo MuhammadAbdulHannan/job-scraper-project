@@ -4,6 +4,7 @@ import {
   STAGE_STATE,
   EXPORT_FORMATS,
   JOB_STATUS,
+  POSTED_WITHIN_LABELS,
 } from "../constants/statusConstants.js";
 import { getStageState, formatElapsed } from "../helpers/formatHelpers.js";
 import { buildDownloadUrl } from "../helpers/apiHelpers.js";
@@ -83,6 +84,12 @@ export default function RunProgress({ jobId, status, onReset }) {
             <dt>Listings per title</dt>
             <dd>{status.inputs.jobsPerKeyword}</dd>
           </div>
+          <div>
+            <dt>Posted within</dt>
+            <dd>
+              {POSTED_WITHIN_LABELS[status.inputs.postedWithin] || "Any time"}
+            </dd>
+          </div>
           <div className="wide">
             <dt>Looking for</dt>
             <dd>{status.inputs.personaTitles?.join(", ") || "—"}</dd>
@@ -98,6 +105,15 @@ export default function RunProgress({ jobId, status, onReset }) {
                 .join(" + ") || "none"}
             </dd>
           </div>
+          {status.inputs.filterKeywords?.length > 0 && (
+            <div className="wide">
+              <dt>Must mention</dt>
+              <dd>
+                {status.inputs.filterKeywords.join(", ")}
+                <em> — in {status.inputs.filterMatchIn?.join(" or ")}</em>
+              </dd>
+            </div>
+          )}
         </dl>
       )}
 

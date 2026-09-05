@@ -46,6 +46,23 @@ export const stripJobFields = (job) => {
     return cleaned;
 };
 
+import { MATCH_IN_FIELD_MAP } from '../constants/filterConstants.js';
+
+// true if ANY keyword appears in ANY of the selected fields
+export const matchesFilterKeywords = (job, keywords, matchIn) => {
+    if (!keywords?.length) return true;      // no keywords = filter off
+    if (!matchIn?.length) return true;       // no fields selected = filter off
+
+    const haystack = matchIn
+        .map((field) => job[MATCH_IN_FIELD_MAP[field]] || '')
+        .join(' ')
+        .toLowerCase();
+
+    if (!haystack.trim()) return false;
+
+    return keywords.some((keyword) => haystack.includes(keyword.toLowerCase().trim()));
+};
+
 
 // unique companies, so we classify (and later look up contacts) once per company
 export const groupByCompany = (jobs) => {
