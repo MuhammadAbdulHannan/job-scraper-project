@@ -23,7 +23,7 @@ export const PIPELINE_STAGES = [
     },
     {
         status: JOB_STATUS.FILTERING,
-        label: 'Filtering by company size',
+        label: 'Applying your filters',
         countKey: null,
     },
     {

@@ -11,8 +11,23 @@ import {
 } from "../constants/searchConstants.js";
 import { validateForm } from "../helpers/formatHelpers.js";
 
-export default function SearchForm({ onSubmit, isSubmitting, submitError }) {
-  const [values, setValues] = useState(DEFAULT_FORM_VALUES);
+export default function SearchForm({
+  onSubmit,
+  isSubmitting,
+  submitError,
+  initialValues,
+}) {
+  const [values, setValues] = useState(() => {
+    if (!initialValues) return DEFAULT_FORM_VALUES;
+
+    // only take keys the form actually knows about
+    const restored = Object.keys(DEFAULT_FORM_VALUES).reduce((acc, key) => {
+      acc[key] = initialValues[key] ?? DEFAULT_FORM_VALUES[key];
+      return acc;
+    }, {});
+
+    return restored;
+  });
   const [errors, setErrors] = useState({});
 
   const setField = (key, value) =>

@@ -13,6 +13,8 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  const [prefill, setPrefill] = useState(null);
+
   useEffect(() => {
     if (!jobId) return;
 
@@ -51,6 +53,7 @@ export default function App() {
   };
 
   const handleReset = () => {
+    if (status?.inputs) setPrefill(status.inputs);
     setJobId(null);
     setStatus(null);
     setSubmitError("");
@@ -60,16 +63,13 @@ export default function App() {
   return (
     <main className="shell">
       {jobId ? (
-        <RunProgress
-          jobId={jobId}
-          status={status}
-          onReset={handleReset}
-        />
+        <RunProgress jobId={jobId} status={status} onReset={handleReset} />
       ) : (
         <SearchForm
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           submitError={submitError}
+          initialValues={prefill}
         />
       )}
     </main>

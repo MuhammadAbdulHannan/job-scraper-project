@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './src/config/db.js';
-// import ngrok from '@ngrok/ngrok';
+import ngrok from '@ngrok/ngrok';
 
 // Importing Routes
 import scrapeRoutes from './src/routes/scrape.routes.js';
@@ -33,13 +33,13 @@ app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)
 });
 
-// async function forwardToApp() {
-//     const forwarder = await ngrok.forward({
-//         addr: "localhost:5000",
-//         authtoken_from_env: true,
-//         domain: "omit-stoop-capable.ngrok-free.dev",
-//     });
-//     console.log(`Available at: ${forwarder.url()}`);
-// }
+async function forwardToApp() {
+    const forwarder = await ngrok.forward({
+        addr: "localhost:5000",
+        authtoken_from_env: true,
+        domain: "omit-stoop-capable.ngrok-free.dev",
+    });
+    console.log(`Available at: ${forwarder.url()}`);
+}
 
-// forwardToApp();
+forwardToApp();
