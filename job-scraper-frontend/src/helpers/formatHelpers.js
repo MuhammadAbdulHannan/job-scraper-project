@@ -16,8 +16,13 @@ export const getStageState = (stageStatus, currentStatus) => {
 export const isRunning = (status) =>
     status && status !== JOB_STATUS.READY && status !== JOB_STATUS.FAILED;
 
-export const formatElapsed = (startedAt) => {
-    const seconds = Math.floor((Date.now() - startedAt) / 1000);
+export const formatElapsed = (startIso, endIso) => {
+    if (!startIso) return '0s';
+
+    const start = new Date(startIso).getTime();
+    const end = endIso ? new Date(endIso).getTime() : Date.now();
+    const seconds = Math.max(0, Math.floor((end - start) / 1000));
+
     const minutes = Math.floor(seconds / 60);
     return minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
 };

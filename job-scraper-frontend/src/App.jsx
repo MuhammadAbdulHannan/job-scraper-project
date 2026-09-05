@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import SearchForm from "./components/SearchForm.jsx";
 import RunProgress from "./components/RunProgress.jsx";
 import { startScrape, fetchJobStatus } from "./helpers/apiHelpers.js";
@@ -12,7 +12,6 @@ export default function App() {
   const [status, setStatus] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const startedAt = useRef(Date.now());
 
   useEffect(() => {
     if (!jobId) return;
@@ -42,7 +41,6 @@ export default function App() {
 
     try {
       const result = await startScrape(values);
-      startedAt.current = Date.now();
       setJobId(result.jobId);
       window.history.replaceState(null, "", `?job=${result.jobId}`);
     } catch (error) {
@@ -65,7 +63,6 @@ export default function App() {
         <RunProgress
           jobId={jobId}
           status={status}
-          startedAt={startedAt.current}
           onReset={handleReset}
         />
       ) : (

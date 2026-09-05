@@ -358,3 +358,35 @@ body {
     flex-direction: column;
   }
 }
+
+.run-params {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+  margin: 0 0 28px;
+  padding: 18px 20px;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.run-params > div.wide {
+  grid-column: 1 / -1;
+}
+.run-params dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+.run-params dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+@media (max-width: 560px) {
+  .run-params {
+    grid-template-columns: 1fr;
+  }
+}

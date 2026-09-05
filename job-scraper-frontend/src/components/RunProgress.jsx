@@ -17,6 +17,14 @@ export default function RunProgress({ jobId, status, startedAt, onReset }) {
       status?.status === JOB_STATUS.FAILED
     )
       return;
+
+    // finished: freeze at the real duration
+    if (isFinished) {
+      setElapsed(formatElapsed(status.createdAt, status.updatedAt));
+      return;
+    }
+
+    setElapsed(formatElapsed(status.createdAt));
     const timer = setInterval(() => setElapsed(formatElapsed(startedAt)), 1000);
     return () => clearInterval(timer);
   }, [status?.status, startedAt]);
@@ -26,6 +34,7 @@ export default function RunProgress({ jobId, status, startedAt, onReset }) {
   const isReady = status.status === JOB_STATUS.READY;
   const isEmpty = status.status === JOB_STATUS.EMPTY;
   const isFailed = status.status === JOB_STATUS.FAILED;
+  const isFinished = isReady || isFailed || isEmpty;
 
   return (
     <div className="panel">
@@ -50,6 +59,49 @@ export default function RunProgress({ jobId, status, startedAt, onReset }) {
           New search
         </button>
       </header>
+
+      {status.inputs && (
+        <dl className="run-params">
+          <div>
+            <dt>Job titles</dt>
+            <dd>{status.inputs.keywords?.join(", ") || "—"}</dd>
+          </div>
+          <div>
+            <dt>Location</dt>
+            <dd>{status.inputs.location || "Anywhere"}</dd>
+          </div>
+          <div>
+            <dt>Job boards</dt>
+            <dd>{status.inputs.platforms?.join(", ") || "—"}</dd>
+          </div>
+          <div>
+            <dt>Company size</dt>
+            <dd>
+              {status.inputs.employeeCountMin}–{status.inputs.employeeCountMax}{" "}
+              employees
+            </dd>
+          </div>
+          <div>
+            <dt>Listings per title</dt>
+            <dd>{status.inputs.jobsPerKeyword}</dd>
+          </div>
+          <div className="wide">
+            <dt>Looking for</dt>
+            <dd>{status.inputs.personaTitles?.join(", ") || "—"}</dd>
+          </div>
+          <div>
+            <dt>Contact details</dt>
+            <dd>
+              {[
+                status.inputs.needEmail && "emails",
+                status.inputs.needPhone && "mobile numbers",
+              ]
+                .filter(Boolean)
+                .join(" + ") || "none"}
+            </dd>
+          </div>
+        </dl>
+      )}
 
       {!isFailed && (
         <ol className="stages">

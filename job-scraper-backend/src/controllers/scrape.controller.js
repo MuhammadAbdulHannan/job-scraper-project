@@ -100,6 +100,9 @@ export const getJobStatus = async (req, res) => {
             isEmpty: job.status === JOB_STATUS.EMPTY,
             emptyReason: job.emptyReason,
             error: job.error,
+            createdAt: job.createdAt,
+            updatedAt: job.updatedAt,
+            inputs: job.inputs,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
